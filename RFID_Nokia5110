@@ -1,0 +1,58 @@
+#include <SPI.h>
+#include <MFRC522.h>
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_PCD8544.h>
+
+constexpr uint8_t RST_PIN = D3;     // Configurable, see typical pin layout above
+constexpr uint8_t SS_PIN = D4;     // Configurable, see typical pin layout above
+Adafruit_PCD8544 display = Adafruit_PCD8544(D8, D3, D2, D1, D0);
+
+MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
+MFRC522::MIFARE_Key key;
+
+String tag;
+
+void setup() {
+  Serial.begin(9600);
+  SPI.begin(); // Init SPI bus
+  rfid.PCD_Init(); // Init MFRC522
+
+  //Initialize Display
+  display.begin();
+
+  // you can change the contrast around to adapt the display for the best viewing!
+  display.setContrast(100);
+  display.setTextSize(2,2);
+
+  // Clear the buffer.
+  display.clearDisplay();
+}
+
+void loop() {
+  if ( ! rfid.PICC_IsNewCardPresent())
+    return;
+  if (rfid.PICC_ReadCardSerial()) {
+    for (byte i = 0; i < 4; i++) {
+      tag += rfid.uid.uidByte[i];
+    }
+    if(tag == "52129195219"){
+      display.println("Elisei");
+      display.display();
+    }else if(tag == "156967141"){
+      display.println("Denis");
+      display.display();
+    }else{
+      display.println("Unknown");
+      display.display();
+    }
+
+    Serial.println(tag);
+    display.clearDisplay();
+    tag = "";
+    rfid.PICC_HaltA();
+    rfid.PCD_StopCrypto1();
+  }
+}
+
+
